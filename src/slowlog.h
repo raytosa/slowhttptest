@@ -69,8 +69,17 @@
 #  define cBRI ""
 #  define cRST ""
 #endif /* ^USE_COLOR */
+struct stu_Proxy{ //声明结构体
 
+char ip[24];
+char port[8];
+int type;
+
+};
 namespace slowhttptest {
+
+void slowproxy_init(const char* file_name);
+
 void slowlog_init(int debug_level, const char* file_name);
 void slowlog(int lvl, const char* format, ...);
 void log_fatal(const char* format, ...);

@@ -50,7 +50,7 @@ enum SocketState {
 
 class SlowSocket {
  public:
-  SlowSocket();
+  SlowSocket(int proxy_No,int proxy_cnt);
   ~SlowSocket();
   const bool isEmpty() const {
     return -1 == sockfd_ && !ssl_;
@@ -125,6 +125,9 @@ class SlowSocket {
   bool connect_ssl(addrinfo* addr, const char* sni);
   int set_nonblocking();
   
+
+  int proxNo_;
+  int proxCnt_;
   int sockfd_;
   int requests_to_send_;
   int followups_to_send_;

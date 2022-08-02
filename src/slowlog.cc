@@ -31,15 +31,70 @@
 #include <string.h>
 
 
+#include "slowurl.h"
 #include "slowlog.h"
+
+using namespace slowhttptest;
+
+extern  int proxy_cnt;
+extern Proxy proxy_All[1024];
 
 namespace {
 static FILE* log_file = NULL;
 int current_log_level;
-
+static FILE* proxy_file = NULL;
 }
 
 namespace slowhttptest {
+
+
+
+
+void slowproxy_init(const char* file_name) {
+
+ int nchars,  nlines;
+
+ char c[60]="123456"; char gc;
+
+// char*p;
+
+ proxy_file = file_name == NULL ? stdout : fopen(file_name, "r");
+  if(!proxy_file) {
+    printf("Unable to open proxy_file file %s for writing: %s", file_name,
+           strerror(errno));
+  }
+  else
+  	{	nchars=nlines=0;
+		while((gc=getc(proxy_file))!=EOF){
+			 if (gc!='\n')
+				 {c[nchars++]=gc;}
+			 else{c[nchars++]='\0';
+				 if (nchars>3) {
+					 proxy_All[nlines].prepare(c);
+					/*  p=strtok(c,":");
+					  strcpy(proxyAll[nlines].ip,p);
+					  p=strtok(NULL,",");
+					  strcpy(proxyAll[nlines].port,p);*/
+					  nchars=0;
+					  nlines++;
+					 }
+			 }
+		}
+
+  	proxy_cnt=nlines;
+  	printf("get %d\n",proxy_cnt);
+  //	for (i=0;i<proxy_cnt;i++)
+  //	{printf("getss--- %s- %s\n",proxyAll[i].ip,proxyAll[i].port);}
+
+    fclose(proxy_file);
+  	}
+
+
+
+}
+
+
+
 void slowlog_init(int debug_level, const char* file_name) {
   log_file = file_name == NULL ? stdout : fopen(file_name, "w");
   if(!log_file) {

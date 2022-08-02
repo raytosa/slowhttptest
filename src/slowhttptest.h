@@ -72,11 +72,11 @@ class SlowHTTPTest {
    int probe_interval, int range_start,
    int range_limit, int read_interval,
    int read_len, int window_lower_limit,
-   int window_upper_limit, ProxyType proxy_type, int debug_level);
+   int window_upper_limit, ProxyType proxy_type, int debug_level ,int proxNo_H1_,int proxCnt_H1_);
   ~SlowHTTPTest();
 
   bool init(const char* url, const char* verb,
-    const char* path, const char* proxy,
+    const char* path, const char* proxy,Proxy* proxy_All,
     const char* content_type, const char* accept, const char* cookie);
   void report_parameters();
   void report_status(bool to_csv);
@@ -112,6 +112,12 @@ class SlowHTTPTest {
   const char* postfix_;
   std::vector<SlowSocket*> sock_;
   SlowSocket* probe_socket_;
+
+
+
+  int proxNo_H_;
+  int proxCnt_H_;
+
   int delay_;
   int duration_;
   int followup_timing_;

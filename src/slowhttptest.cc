@@ -124,7 +124,10 @@ SlowHTTPTest::SlowHTTPTest(int delay, int duration,
                            int window_lower_limit,
                            int window_upper_limit,
                            ProxyType proxy_type,
-                           int debug_level)
+                           int debug_level,
+						   int proxNo_H1_,
+						    int proxCnt_H1_
+						   )
     : probe_socket_(0),
       delay_(delay),
       duration_(duration),
@@ -148,7 +151,9 @@ SlowHTTPTest::SlowHTTPTest(int delay, int duration,
       window_upper_limit_(window_upper_limit),
       is_dosed_(false),
       proxy_type_(proxy_type),
-      debug_level_(debug_level) {
+      debug_level_(debug_level),
+	  proxNo_H_(proxNo_H1_),
+	  proxCnt_H_(proxCnt_H1_) {
 }
 
 SlowHTTPTest::~SlowHTTPTest() {
@@ -214,13 +219,13 @@ const char* SlowHTTPTest::get_random_extra() {
 }
 
 bool SlowHTTPTest::init(const char* url, const char* verb,
-    const char* path, const char* proxy,
+    const char* path, const char* proxy, Proxy* proxy_All,
     const char* content_type, const char* accept, const char* cookie) {
   if(!change_fd_limits()) {
     slowlog(LOG_INFO, "error setting open file limits\n");
     
   }
-  if(!base_uri_.prepare(url)) {
+  if(!base_uri_.prepare(url)) {	//预处理 直接地址
     slowlog(LOG_FATAL, "Error parsing URL\n");
     return false;
   }
@@ -234,16 +239,16 @@ bool SlowHTTPTest::init(const char* url, const char* verb,
       return false;
     }
     if(proxy != 0 && strlen(proxy)) {
-      if(!proxy_.prepare(proxy)) {
+      if(!proxy_.prepare(proxy)) {		//预处理 proxy地址
         slowlog(LOG_FATAL, "Error parsing proxy information\n");
         return false;
       } else {
-        if(eHTTPProxy == proxy_type_) {
+        if(eHTTPProxy == proxy_type_) {			//如果是http类型proxy 转换获取addrinfo
           if(!resolve_addr(proxy_.getHost().c_str(), proxy_.getPortStr(), &addr_)) {
             return false;
           }
         }
-        if(eProbeProxy == proxy_type_) {
+        if(eProbeProxy == proxy_type_) {		//如果是Probe类型proxy 转换获取addrinfo
           if(!resolve_addr(base_uri_.getHost().c_str(), base_uri_.getPortStr(), &addr_)) {
             return false;
           }
@@ -313,7 +318,7 @@ bool SlowHTTPTest::init(const char* url, const char* verb,
   request_.clear();
   request_.append(verb_);
   request_.append(" ");
-  if(eHTTPProxy == proxy_type_)
+  if(eHTTPProxy == proxy_type_)					//如果是http类型proxy request_
     request_.append(base_uri_.getData());
   else
     request_.append(base_uri_.getPath());
@@ -342,7 +347,7 @@ bool SlowHTTPTest::init(const char* url, const char* verb,
   }
   // method for probe is always GET
   probe_request_.append("GET");
-  if(eProbeProxy == proxy_type_) {
+  if(eProbeProxy == proxy_type_) {			//如果probe类型proxy 构造 request
     probe_request_.append(" ");
     probe_request_.append(base_uri_.getData());
     probe_request_.append(request_.begin() + verb_.size() + 1 + base_uri_.getPathLen(), request_.end());
@@ -677,7 +682,7 @@ bool SlowHTTPTest::run_test() {
 #endif
     // init and connect probe socket
     if(!probe_socket_ && probe_taken != seconds_passed_ && seconds_passed_ % probe_timeout_ == 0) {
-      probe_socket_ = new SlowSocket();
+      probe_socket_ = new SlowSocket(1,1);			//yhb  创建 探针SlowSocket实例
       if(probe_socket_->init(addr_, base_uri_.getHost().c_str(), proxy_type_ == eNoProxy ? base_uri_.isSSL() : false, maxfd, 0)) {
         probe_socket_->set_state(eConnecting);
         probe_taken = seconds_passed_;
@@ -719,7 +724,7 @@ bool SlowHTTPTest::run_test() {
 
     active_sock_num = 0;
     if(num_connected < num_connections_) {
-      sock_[num_connected] = new SlowSocket();
+      sock_[num_connected] = new SlowSocket(num_connected%proxCnt_H_,proxCnt_H_);		//yhb  创建 每一个SlowSocket实例
       sock_[num_connected]->set_state(eInit);
       if(!sock_[num_connected]->init(addr_, base_uri_.getHost().c_str(), proxy_type_ == eNoProxy ? base_uri_.isSSL() : false, maxfd,
           (eRange == test_type_ || eSlowRead == test_type_) ? 0 : followup_cnt_,

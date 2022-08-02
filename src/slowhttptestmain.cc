@@ -131,11 +131,18 @@ void int_handler(int param) {
   g_running = false;  
 }
 
+
+using slowhttptest::slowproxy_init;
 using slowhttptest::slowlog_init;
 using slowhttptest::slowlog;
 using slowhttptest::SlowHTTPTest;
 using slowhttptest::SlowTestType;
 using slowhttptest::ProxyType;
+using slowhttptest::Proxy;
+//using namespace slowhttptest;
+
+int proxy_cnt=0;
+Proxy proxy_All[1024];
 
 int main(int argc, char **argv) {
 
@@ -189,9 +196,10 @@ int main(int argc, char **argv) {
 #endif
           return -1;
         break;
-      case 'd':
+      case 'd':			//yhb  获取proxy 地址
         strncpy(proxy, optarg, 1023);
-        proxy_type = slowhttptest::eHTTPProxy;
+        proxy_type = slowhttptest::eHTTPProxy;		//指定proxy 类型为http访问使用
+        slowproxy_init(optarg);			//proxy文件-> proxyAll
         break;
       case 'e':
         strncpy(proxy, optarg, 1023);
@@ -319,8 +327,8 @@ int main(int argc, char **argv) {
       conn_cnt, max_random_data_len, content_length,
       type, need_stats, pipeline_factor, probe_interval,
       range_start, range_limit, read_interval, read_len,
-      window_lower_limit, window_upper_limit, proxy_type, debug_level));
-  if(!slow_test->init(url, verb, path, proxy, content_type, accept, cookie)) {
+      window_lower_limit, window_upper_limit, proxy_type, debug_level,proxy_cnt,proxy_cnt));
+  if(!slow_test->init(url, verb, path, proxy,proxy_All, content_type, accept, cookie)) {
     slowlog(LOG_FATAL, "%s: error setting up slow HTTP test\n", __FUNCTION__);
     return -1;
   } else if(!slow_test->run_test()) {

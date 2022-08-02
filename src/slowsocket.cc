@@ -42,8 +42,10 @@
 #include "slowurl.h"
 
 namespace slowhttptest {
-SlowSocket::SlowSocket()
-    : sockfd_(-1),
+SlowSocket::SlowSocket(int proxy_No,int proxy_cnt)
+    :proxNo_(proxy_No),
+	 proxCnt_(proxy_cnt),
+	 sockfd_(-1),
       requests_to_send_(0),
       followups_to_send_(0),
       last_followup_timing_(0),
