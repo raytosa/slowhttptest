@@ -199,6 +199,7 @@ int main(int argc, char **argv) {
       case 'd':			//yhb  获取proxy 地址
         strncpy(proxy, optarg, 1023);
         proxy_type = slowhttptest::eHTTPProxy;		//指定proxy 类型为http访问使用
+
         slowproxy_init(optarg);			//proxy文件-> proxyAll
         break;
       case 'e':
