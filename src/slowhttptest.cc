@@ -746,7 +746,7 @@ bool SlowHTTPTest::run_test() {
       if(!sock_[num_connected]->init(addr_All_[num_connected%proxCnt_H_], base_uri_.getHost().c_str(), proxy_type_ == eNoProxy ? base_uri_.isSSL() : false, maxfd,
           (eRange == test_type_ || eSlowRead == test_type_) ? 0 : followup_cnt_,
           eSlowRead == test_type_ ? read_interval_ : 0,
-          window_lower_limit_, window_upper_limit_)) {
+          window_lower_limit_, window_upper_limit_)) {			//yhb  创建 每一个SlowSocket实例地址初始化
         sock_[num_connected]->set_state(eError);
         slowlog(LOG_ERROR, "%s: Unable to initialize %dth slow  socket.\n", __FUNCTION__,
             (int) num_connected);
