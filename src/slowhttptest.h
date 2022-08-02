@@ -95,7 +95,9 @@ class SlowHTTPTest {
   RandomTextGenerator textgen_;
   addrinfo* addr_;
   addrinfo* probe_proxy_addr_;
+   addrinfo* addr_All_[1024];
   std::string request_;
+    std::string request_All_[1024];
   std::string probe_request_;
   std::string random_extra_;
   std::string verb_;
