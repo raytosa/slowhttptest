@@ -323,29 +323,29 @@ bool SlowHTTPTest::init(const char* url, const char* verb,
   // start building request----------------
    for(pi=0;pi<proxCnt_H_;pi++)
    	{
-		request_[pi].clear();
-		 request_[pi].append(verb_);
-		 request_[pi].append(" ");
-		 if(eHTTPProxy == proxy_type_)				   //如果是http类型proxy request_[pi]
-		   request_[pi].append(base_uri_.getData());
+		request_All_[pi].clear();
+		 request_All_[pi].append(verb_);
+		 request_All_[pi].append(" ");
+		 if(eHTTPProxy == proxy_type_)				   //如果是http类型proxy request_All_[pi]
+		   request_All_[pi].append(base_uri_.getData());
 		 else
-		   request_[pi].append(base_uri_.getPath());
-		 request_[pi].append(" HTTP/1.1\r\n");
-		 request_[pi].append("Host: ");
-		 request_[pi].append(base_uri_.getHost());
+		   request_All_[pi].append(base_uri_.getPath());
+		 request_All_[pi].append(" HTTP/1.1\r\n");
+		 request_All_[pi].append("Host: ");
+		 request_All_[pi].append(base_uri_.getHost());
 		
 		 if(base_uri_.getPort() != 80 && base_uri_.getPort() != 443) {
-		   request_[pi].append(":");
+		   request_All_[pi].append(":");
 		   std::stringstream ss;
 		   ss << base_uri_.getPort();
-		   request_[pi].append(ss.str());
+		   request_All_[pi].append(ss.str());
 		 }
 		
-		 request_[pi].append("\r\n");
-		 request_[pi].append("User-Agent: ");
-		 request_[pi].append(user_agent_);
-		 request_[pi].append("\r\n");
-		 request_[pi].append(referer);
+		 request_All_[pi].append("\r\n");
+		 request_All_[pi].append("User-Agent: ");
+		 request_All_[pi].append(user_agent_);
+		 request_All_[pi].append("\r\n");
+		 request_All_[pi].append(referer);
 	  
 	 
 
@@ -354,44 +354,44 @@ bool SlowHTTPTest::init(const char* url, const char* verb,
 	  // Cookie
 	  if (cookie != 0 && strlen(cookie)) {
 	    cookie_.append(cookie);
-	    request_[pi].append("Cookie: ");
-	    request_[pi].append(cookie_);
-	    request_[pi].append(crlf);
+	    request_All_[pi].append("Cookie: ");
+	    request_All_[pi].append(cookie_);
+	    request_All_[pi].append(crlf);
 	  }
 	  // method for probe is always GET
 	  probe_request_.append("GET");
 	  if(eProbeProxy == proxy_type_) {			//如果probe类型proxy 构造 request
 	    probe_request_.append(" ");
 	    probe_request_.append(base_uri_.getData());
-	    probe_request_.append(request_[pi].begin() + verb_.size() + 1 + base_uri_.getPathLen(), request_[pi].end());
+	    probe_request_.append(request_All_[pi].begin() + verb_.size() + 1 + base_uri_.getPathLen(), request_All_[pi].end());
 	  } else {
-	    probe_request_.append(request_[pi].begin() + verb_.size(), request_[pi].end());
+	    probe_request_.append(request_All_[pi].begin() + verb_.size(), request_All_[pi].end());
 	  }
 	  probe_request_.append("\r\n");
 
 	  
 	  if(ePost == test_type_) {
-	    request_[pi].append("Content-Length: ");
+	    request_All_[pi].append("Content-Length: ");
 	    std::stringstream ss;
 	    ss << content_length_;
-	    request_[pi].append(ss.str());
-	    request_[pi].append("\r\n");
-	    request_[pi].append(content_type_);
-	    request_[pi].append(accept_);
-	    request_[pi].append(post_request);
+	    request_All_[pi].append(ss.str());
+	    request_All_[pi].append("\r\n");
+	    request_All_[pi].append(content_type_);
+	    request_All_[pi].append(accept_);
+	    request_All_[pi].append(post_request);
 	  } else if(eRange == test_type_) {
-	    GenerateRangeHeader(range_start_, 1, range_limit_, &request_[pi]);
+	    GenerateRangeHeader(range_start_, 1, range_limit_, &request_All_[pi]);
 	  }
 
 	  if(eSlowRead == test_type_) {
 	    if(pipeline_factor_ > 1) {
-	      request_[pi].append("Connection: Keep-Alive\r\n");
-	      request_[pi].reserve(request_[pi].length() * pipeline_factor_);
+	      request_All_[pi].append("Connection: Keep-Alive\r\n");
+	      request_All_[pi].reserve(request_All_[pi].length() * pipeline_factor_);
 	    }
-	    request_[pi].append("\r\n");
-	    size_t len = request_[pi].length();
+	    request_All_[pi].append("\r\n");
+	    size_t len = request_All_[pi].length();
 	    for(int i = 1; i < pipeline_factor_; ++i){
-	      request_[pi].append(request_[pi].c_str(), len);
+	      request_All_[pi].append(request_All_[pi].c_str(), len);
 	    }
 	  	}
    	}
@@ -956,8 +956,8 @@ bool SlowHTTPTest::run_test() {
           if(FD_ISSET(sock_[i]->get_sockfd(), &writefds)) { // write
 #endif
             if(sock_[i]->get_requests_to_send() > 0) {
-              ret = sock_[i]->send_slow(request_[pi].c_str(),
-                  request_[pi].size());
+              ret = sock_[i]->send_slow(request_All_[num_connected%proxCnt_H_].c_str(),
+                  request_All_[num_connected%proxCnt_H_].size());
               if(ret <= 0 && errno != EAGAIN) {
                 sock_[i]->set_state(eClosed);
                 slowlog(LOG_DEBUG,
@@ -976,9 +976,9 @@ bool SlowHTTPTest::run_test() {
                   slowlog(LOG_DEBUG,
                       "%s:initial %d of %d bytes sent on socket %d:\n%s",
                       __FUNCTION__, ret,
-                      (int) request_[pi].size(),
+                      (int) request_All_[num_connected%proxCnt_H_].size(),
                       (int) sock_[i]->get_sockfd(),
-                      request_[pi].c_str());
+                      request_All_[num_connected%proxCnt_H_].c_str());
                 } else {
                   // still in connect phase
                   //slowlog(LOG_DEBUG, "socket %d wr status:%s\n",
